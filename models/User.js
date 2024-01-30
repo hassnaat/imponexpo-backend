@@ -1,23 +1,50 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  fullname: {
+  firstName: {
     type: String,
-    required: [true, "Please add a fullname"],
+    required: true,
+    trim: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+    trim: true,
   },
   email: {
     type: String,
-    required: [true, "Please add an email"],
+    required: true,
     unique: true,
+    trim: true,
+  },
+  mobileNumber: {
+    type: String,
+    required: true,
+    trim: true,
   },
   password: {
     type: String,
-    required: [true, "Please add a password"],
+    required: true,
+    select: false,
   },
-  role: {
+  accountType: {
     type: String,
-    enum: ["admin", "seller", "buyer", "partner"],
-    default: "buyer",
+    required: true,
+    enum: ["individual", "corporation"],
+  },
+  companyName: {
+    type: String,
+    trim: true,
+  },
+  countryRegion: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  reasonForSignup: {
+    type: String,
+    required: true,
+    trim: true,
   },
 });
 
