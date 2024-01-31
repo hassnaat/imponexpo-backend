@@ -133,60 +133,6 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
     .json({ success: true, message: "Password updated successfully" });
 });
 
-exports.forgotPassword = asyncHandler(async (req, res, next) => {
-  const { identifier } = req.body; // 'identifier' could be email, phone number, or user ID
-
-  // Find user by email or mobile number or user ID
-  const user = await User.findOne({
-    $or: [
-      { email: identifier },
-      { mobileNumber: identifier },
-      { _id: identifier },
-    ],
-  });
-
-  if (!user) {
-    return res.status(404).json({ success: false, message: "User not found" });
-  }
-
-  // Generate reset token (This is a placeholder implementation. Use a proper token generator in production)
-  const resetToken = crypto.randomBytes(20).toString("hex");
-
-  // Set reset token fields on user (Implement these fields in your User model and create proper logic to handle token expiry)
-  user.resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // Token expires after 10 minutes
-  await user.save();
-
-  // Create reset URL or message
-  const resetUrl = `${req.protocol}://${req.get(
-    "host"
-  )}/api/users/reset-password/${resetToken}`;
-  const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please go to the following URL to reset your password: \n\n ${resetUrl}`;
-
-  try {
-    // Send email (or SMS with a similar function if using mobile number)
-    await sendEmail({
-      email: user.email,
-      subject: "Password reset token",
-      message,
-    });
-
-    res.status(200).json({ success: true, message: "Email sent" });
-  } catch (err) {
-    console.log(err);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    await user.save();
-
-    return res
-      .status(500)
-      .json({ success: false, message: "Email could not be sent" });
-  }
-});
-
 const generateToken = () => {
   return new Promise((resolve, reject) => {
     crypto.randomBytes(32, (err, buffer) => {
@@ -231,7 +177,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   // Create reset URL or message
   const resetUrl = `${req.protocol}://${req.get(
     "host"
-  )}/api/users/reset-password/${resetToken}`;
+  )}/api/users/new-password/${resetToken}`;
   const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please go to the following URL to reset your password: \n\n ${resetUrl}`;
 
   try {
@@ -254,7 +200,36 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
       .json({ success: false, message: "Email could not be sent" });
   }
 });
+exports.newPassword = asyncHandler(async (req, res, next) => {
+  const { token, newPassword } = req.body;
 
+  // Hash the token to compare with the database
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  // Find user by the hashed token and check if the token has expired
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid or expired token" });
+  }
+
+  // Set the new password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+  user.password = hashedPassword;
+  user.resetPasswordToken = undefined; // Clear the reset token fields
+  user.resetPasswordExpire = undefined;
+  await user.save();
+
+  res
+    .status(200)
+    .json({ success: true, message: "Password updated successfully" });
+});
 exports.getUsers = asyncHandler(async (req, res, next) => {
   const users = await User.find();
   res.status(200).json({ success: true, data: users });
