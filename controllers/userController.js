@@ -175,9 +175,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   // Create reset URL or message
-  const resetUrl = `${req.protocol}://${req.get(
-    "host"
-  )}/api/users/new-password/${resetToken}`;
+  const resetUrl = `https://imponexpo.netlify.app/new-password/${resetToken}`;
   const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please go to the following URL to reset your password: \n\n ${resetUrl}`;
 
   try {

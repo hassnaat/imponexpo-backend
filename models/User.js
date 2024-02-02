@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
   accountType: {
     type: String,
     required: true,
-    enum: ["individual", "corporation"],
+    enum: ["individual", "corporation", "admin"],
   },
   companyName: {
     type: String,
