@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
+
 exports.register = asyncHandler(async (req, res, next) => {
   const {
     firstName,
@@ -175,7 +176,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   // Create reset URL or message
-  const resetUrl = `https://imponexpo.netlify.app/new-password/${resetToken}`;
+  const resetUrl = `https://labease.netlify.app/new-password/${resetToken}`;
   const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please go to the following URL to reset your password: \n\n ${resetUrl}`;
 
   try {
